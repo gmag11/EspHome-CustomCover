@@ -131,10 +131,6 @@ cover:
     name: "${node_name}"
     id: ${node_name}
 
-# binary_sensor:
-#   - platform: custom
-    
-
 button:
   - platform: template
     name: "Calibrate top position"

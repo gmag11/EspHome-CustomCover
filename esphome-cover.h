@@ -435,23 +435,3 @@ public:
     }
 };
 
-
-// class Calibration_Buttons : public PollingComponent, public BinarySensor {
-// public:
-//     BinarySensor* calibrate_up = new BinarySensor ();
-//     BinarySensor* calibrate_down = new BinarySensor ();
-//     BinarySensor* reset_calibration = new BinarySensor ();
-//     MyCustomBinarySensor () : PollingComponent (15000) {}
-
-//     void setup () override {
-//       // This will be called by App.setup()
-//         pinMode (5, INPUT);
-//     }
-//     void update () override {
-//       // This will be called every "update_interval" milliseconds.
-
-//       // Publish an OFF state
-//         bool state = digitalRead (5);
-//         publish_state (state);
-//     }
-// };
