@@ -1,0 +1,4 @@
+[wokwi]
+version=1
+firmware='.\.esphome\build\toldo\.pioenvs\toldo\firmware.bin'
+elf='.\.esphome\build\toldo\.pioenvs\toldo\firmware.elf'

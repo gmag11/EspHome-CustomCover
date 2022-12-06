@@ -1,0 +1,93 @@
+esphome:
+  name: toldo
+  includes:
+    - esphome-cover.h
+
+esp32:
+  board: esp-wrover-kit
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+# api:
+#   password: ""
+
+# ota:
+#   password: ""
+
+# wifi:
+#   ssid: "Wokwi-GUEST"
+#   password: ""
+#   fast_connect: True
+
+#   # Enable fallback hotspot (captive portal) in case wifi connection fails
+#   ap:
+#     ssid: "Toldo Fallback Hotspot"
+#     password: "EKDtWkDNw9MG"
+
+# captive_portal:
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 18
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "push down"
+    id: "push_down"
+    on_press: 
+      then:
+        - cover.close: esphome_cover
+    # on_release: 
+    #   then:
+    #     - cover.stop: esphome_cover
+  - platform: gpio
+    pin:
+      number: 5
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "push up"
+    id: "push_up"
+    on_press: 
+      then:
+        - cover.open: esphome_cover
+    # on_release: 
+    #   then:
+    #     - cover.stop: esphome_cover
+  - platform: gpio
+    pin:
+      number: 26
+      mode:
+        input: true
+        pullup: true
+      inverted: true
+    name: "goto50"
+    id: "goto50"
+    # on_press: 
+    #   then:
+    #     - component
+            
+
+cover:
+- platform: custom
+  #id: esphome_cover
+  lambda: |-
+    auto esphome_cover = new EsphomeCover();
+    App.register_component(esphome_cover);
+    return {esphome_cover};
+
+  covers:
+    name: "esphome_cover"
+    id: esphome_cover
+
+button:
+  - platform: template
+    name: "Calibrate"
+    # on_press:
