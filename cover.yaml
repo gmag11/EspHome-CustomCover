@@ -103,20 +103,31 @@ binary_sensor:
     on_release: 
       then:
         - cover.stop: ${node_name}
-#   - platform: gpio
-#     pin:
-#       number: 26
-#       mode:
-#         input: true
-#         pullup: true
-#       inverted: true
-#     name: "aux"
-#     id: "aux"
-#     on_press: 
-#       then:
-#         - homeassistant.service: 
-#             service: calibration
 
+light:
+  - platform: status_led
+    name: "${node_name} Status LED"
+    id: blue_led
+    disabled_by_default: true
+    pin:
+      inverted: true
+      number: GPIO13
+
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "${node_name} IP Address"
+      disabled_by_default: true
+      id: "ip_address"
+  - platform: wifi_info
+    ssid:
+      name: "${node_name} SSID"
+      disabled_by_default: true
+      id: "ssid"
+     
+time:
+  - platform: sntp
+    id: my_time
              
             
 
