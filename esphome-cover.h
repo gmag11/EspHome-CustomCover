@@ -1,7 +1,8 @@
 #include "esphome.h"
+#ifdef ESP32
 #include <esp_log.h>
+#endif
 
-#undef GET_TASK_STACK_INFO
 #include <functional>
 
 constexpr auto COVER_TAG = "Esphome cover";
@@ -44,7 +45,7 @@ const uint8_t pos_len_lut[] = { 0,  0,  0,  0,  0,  0,  0,  1,  1,  1, // 0  -  
                                 84, 86, 87, 89, 90, 92, 94, 95, 97, 98, // 90 - 99
                                 100 };									// 100
 
-class EsphomeCover : public Component, public Cover {
+class EsphomeCover : public Component, public Cover, public CustomAPIDevice {
 protected:
     blindControlerHw_t config;
     //int positionRequest;
@@ -92,32 +93,32 @@ protected:
     }
     
     void configureFullRollup () {
-        ESP_LOGI (COVER_TAG, "Configure full roll up");
+        ESP_LOGD (COVER_TAG, "Configure full roll up");
         targetPosition = 100;
         travellingTime = config.fullTravellingTime * 1.1;
         current_operation = COVER_OPERATION_OPENING;
         blindState = rollingUp;
-        ESP_LOGI (COVER_TAG, "--- STATE: Rolling up");
+        ESP_LOGD (COVER_TAG, "--- STATE: Rolling up");
     }
 
     void configureFullRolldown () {
-        ESP_LOGI (COVER_TAG, "Configure full roll down");
+        ESP_LOGD (COVER_TAG, "Configure full roll down");
         targetPosition = 0;
         travellingTime = config.fullTravellingTime * 1.1;
         current_operation = COVER_OPERATION_CLOSING;
         blindState = rollingDown;
-        ESP_LOGI (COVER_TAG, "--- STATE: Rolling down");
+        ESP_LOGD (COVER_TAG, "--- STATE: Rolling down");
     }
 
     bool process_goto_position (float pos_requested) {
         targetPosition = angleToPosition (pos_requested * 100);
-        ESP_LOGI (COVER_TAG, "process_goto_position. Requested pos: %d, Requested angle: %d", (int)(pos_requested * 100), targetPosition);
+        ESP_LOGD (COVER_TAG, "process_goto_position. Requested pos: %d, Requested angle: %d", (int)(pos_requested * 100), targetPosition);
         if (targetPosition <= 0) {
-            ESP_LOGI (COVER_TAG, "Full Rolldown");
+            ESP_LOGD (COVER_TAG, "Full Rolldown");
             configureFullRolldown ();
         }
         if (targetPosition >= 100) {
-            ESP_LOGI (COVER_TAG, "Full Rollup");
+            ESP_LOGD (COVER_TAG, "Full Rollup");
             configureFullRollup ();
         }
         bool result = gotoTargetPosition ();
@@ -138,22 +139,22 @@ protected:
     }
 
     void processBlindEvent (blindState_t state, int8_t pos) {
-        ESP_LOGI (COVER_TAG, "State: %s. Position %d", stateToStr (state), pos);
+        ESP_LOGD (COVER_TAG, "State: %s. Position %d", stateToStr (state), pos);
 
         this->position = (float)pos / 100.0;
         
         switch (state) {
         case rollingUp:
-            current_operation = COVER_OPERATION_OPENING;
+            this->current_operation = COVER_OPERATION_OPENING;
             break;
         case rollingDown:
-            current_operation = COVER_OPERATION_CLOSING;
+            this->current_operation = COVER_OPERATION_CLOSING;
             break;
         default:
-            current_operation = COVER_OPERATION_IDLE;
+            this->current_operation = COVER_OPERATION_IDLE;
         }
 
-        ESP_LOGI (COVER_TAG, "Publish position: %f", this->position);
+        ESP_LOGI (COVER_TAG, "Publish state. Operation: %d, Position %f", this->current_operation, this->position);
         this->publish_state ();
     }
     
@@ -162,17 +163,17 @@ protected:
         ESP_LOGI (COVER_TAG, "Go to position %d. Current = %d", targetPosition, currentPosition);
 
         if (targetPosition <= 0) {
-            ESP_LOGI (COVER_TAG, "Force gotoPosition full roll down");
+            ESP_LOGD (COVER_TAG, "Force gotoPosition full roll down");
             targetPosition = 0;
         } else if (targetPosition >= 100) {
-            ESP_LOGI (COVER_TAG, "Force gotoPosition full roll up");
+            ESP_LOGD (COVER_TAG, "Force gotoPosition full roll up");
             targetPosition = 100;
         } 
         stop ();
-        ESP_LOGI (COVER_TAG, "Current position: %d, Position requested: %d", currentPosition, targetPosition);
+        ESP_LOGD (COVER_TAG, "Current position: %d, Position requested: %d", currentPosition, targetPosition);
         if (targetPosition > currentPosition) {
             blindState = rollingUp;
-            ESP_LOGI (COVER_TAG, "--- STATE: Rolling up from %d to  %d", positionToAngle (currentPosition), positionToAngle (targetPosition));
+            ESP_LOGD (COVER_TAG, "--- STATE: Rolling up from %d to  %d", positionToAngle (currentPosition), positionToAngle (targetPosition));
             if (targetPosition < 100) {
                 travellingTime = movementToTime (targetPosition - currentPosition);
             } else {
@@ -180,14 +181,14 @@ protected:
             }
         } else if (targetPosition < currentPosition) {
             blindState = rollingDown;
-            ESP_LOGI (COVER_TAG, "--- STATE: Rolling down from %d to %d", positionToAngle (currentPosition), positionToAngle (targetPosition));
+            ESP_LOGD (COVER_TAG, "--- STATE: Rolling down from %d to %d", positionToAngle (currentPosition), positionToAngle (targetPosition));
             if (targetPosition > 0) {
                 travellingTime = movementToTime (currentPosition - targetPosition);
             } else {
                 configureFullRolldown ();
             }
         } else {
-            ESP_LOGI (COVER_TAG, "Requested = Current position");
+            ESP_LOGD (COVER_TAG, "Requested = Current position");
             blindState = stopped;
             processBlindEvent (blindState, positionToAngle (currentPosition));
         }
@@ -196,13 +197,13 @@ protected:
 
     time_t movementToTime (int8_t movement) {
         clock_t calculatedTime = movement * config.fullTravellingTime / 100;
-        ESP_LOGI (COVER_TAG, "config.fullTravellingTime = %lu", config.fullTravellingTime);
-        ESP_LOGI (COVER_TAG, "Calculated time: %lu", calculatedTime);
+        ESP_LOGD (COVER_TAG, "config.fullTravellingTime = %lu", config.fullTravellingTime);
+        ESP_LOGD (COVER_TAG, "Calculated time: %lu", calculatedTime);
 
         if (calculatedTime >= config.fullTravellingTime) {
             calculatedTime = config.fullTravellingTime * 1.1;
         }
-        ESP_LOGI (COVER_TAG, "Desired movement: %d. Calculated time: %lu", movement, calculatedTime);
+        ESP_LOGD (COVER_TAG, "Desired movement: %d. Calculated time: %lu", movement, calculatedTime);
         return calculatedTime;
     }
 
@@ -217,22 +218,22 @@ protected:
         case rollingDown:
             if (millis () - lastShowedPos > config.notifPeriod) {
                 lastShowedPos = millis ();
-                ESP_LOGI (COVER_TAG, "Position: %d", currentPosition);
+                ESP_LOGD (COVER_TAG, "Position: %d", currentPosition);
                 processBlindEvent (blindState, positionToAngle (currentPosition));
             }
             break;
         case stopped:
             if (millis () - lastShowedPos > config.keepAlivePeriod) {
                 lastShowedPos = millis ();
-                ESP_LOGI (COVER_TAG, "Position: %d", currentPosition);
+                ESP_LOGD (COVER_TAG, "Position: %d", currentPosition);
                 processBlindEvent (blindState, positionToAngle (currentPosition));
             }
             break;
         case error:
             if (millis () - lastShowedPos > config.keepAlivePeriod) {
                 lastShowedPos = millis ();
-                ESP_LOGI (COVER_TAG, "Blind in error status");
-                ESP_LOGI (COVER_TAG, "Position: %d", currentPosition);
+                ESP_LOGD (COVER_TAG, "Blind in error status");
+                ESP_LOGD (COVER_TAG, "Position: %d", currentPosition);
                 processBlindEvent (blindState, positionToAngle (currentPosition));
             }
             break;
@@ -329,7 +330,10 @@ public:
     
     void setup () override {
         ESP_LOGI (COVER_TAG, "Called setup()");
-        configurePins ();
+        config.fullTravellingTime = fullTravellingTime_config->value () * 1000;
+        config.motorDownPin = downMotorPin->value ();
+        config.motorUpPin = upMotorPin->value ();
+
         // OFF_STATE = !config.ON_STATE;
         ESP_LOGI (COVER_TAG, "==== Blind Controller Configuration ====");
         ESP_LOGI (COVER_TAG, "Up Relay pin: %d", config.motorUpPin);
@@ -341,12 +345,52 @@ public:
         ESP_LOGI (COVER_TAG, "Keep Alive period time: %lu ms", config.keepAlivePeriod);
         ESP_LOGI (COVER_TAG, "On Relay state: %s", config.ON_STATE ? "HIGH" : "LOW");
 
-        register_service (&EsphomeCover::on_calibrate, "calibration");
+        configurePins ();
+
+        register_service (&EsphomeCover::on_calibrate, "calibration", {"action"});
     }
 
+    void execute_key_sequence (const int* sequence, int size) {
+        const int space = 250;
+        int i;
+        ESP_LOGI (COVER_TAG, "execute_calibration_sequence. Size: %d", size);
+        for (i = 0; i < (size - 1); i++) {
+            ESP_LOGI (COVER_TAG, "%d: %d", i, sequence[i]);
+            digitalWrite (sequence[i], config.ON_STATE);
+            delay (space);
+            digitalWrite (sequence[i], !config.ON_STATE);
+            delay (space);
+        }
+        ESP_LOGI (COVER_TAG, "%d: %d Last step", i, sequence[i]);
+        digitalWrite (sequence[i], config.ON_STATE);
+        delay (2500);
+        ESP_LOGI (COVER_TAG, "Sequence end");
+        digitalWrite (sequence[i], !config.ON_STATE);
+        delay (space);
+    }
 
-    void on_calibrate () {
-        ESP_LOGI (COVER_TAG, "Calibration called");
+    void on_calibrate (int action) {
+        ESP_LOGI (COVER_TAG, "Calibration called. Parameter %d", action);
+        const int up = config.motorUpPin;
+        const int down = config.motorDownPin;
+        const int cancel_calibration[] = { up, up, down, up, up, down };
+        const int up_calibration[] = { up, up, up};
+        const int down_calibration[] = { down ,down ,down };
+
+        switch (action) {
+        case 0:
+            ESP_LOGD (COVER_TAG, "Reset calibration");
+            execute_key_sequence (cancel_calibration, sizeof (cancel_calibration) / sizeof (int));
+            break;
+        case 1:
+            ESP_LOGD (COVER_TAG, "Up calibration");
+            execute_key_sequence (up_calibration, sizeof (up_calibration) / sizeof (int));
+            break;
+        case 2:
+            ESP_LOGD (COVER_TAG, "Down calibration");
+            execute_key_sequence (down_calibration, sizeof (down_calibration) / sizeof (int));
+            break;
+        }
     }
     
     void loop () override {
@@ -385,6 +429,29 @@ public:
         if (call.get_stop ()) {
           // User requested cover stop
             ESP_LOGI (COVER_TAG, "Called stop");
+            blindState = stopped;
+            processBlindEvent (blindState, positionToAngle (currentPosition));
         }
     }
 };
+
+
+// class Calibration_Buttons : public PollingComponent, public BinarySensor {
+// public:
+//     BinarySensor* calibrate_up = new BinarySensor ();
+//     BinarySensor* calibrate_down = new BinarySensor ();
+//     BinarySensor* reset_calibration = new BinarySensor ();
+//     MyCustomBinarySensor () : PollingComponent (15000) {}
+
+//     void setup () override {
+//       // This will be called by App.setup()
+//         pinMode (5, INPUT);
+//     }
+//     void update () override {
+//       // This will be called every "update_interval" milliseconds.
+
+//       // Publish an OFF state
+//         bool state = digitalRead (5);
+//         publish_state (state);
+//     }
+// };
