@@ -84,10 +84,10 @@ binary_sensor:
     id: "push_down"
     on_press: 
       then:
-        - cover.close: esphome_cover
+        - cover.close: ${node_name}
     on_release: 
       then:
-        - cover.stop: esphome_cover
+        - cover.stop: ${node_name}
   - platform: gpio
     pin:
       number: ${upButton}
@@ -99,10 +99,10 @@ binary_sensor:
     id: "push_up"
     on_press: 
       then:
-        - cover.open: esphome_cover
+        - cover.open: ${node_name}
     on_release: 
       then:
-        - cover.stop: esphome_cover
+        - cover.stop: ${node_name}
 #   - platform: gpio
 #     pin:
 #       number: 26
