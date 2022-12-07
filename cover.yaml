@@ -26,9 +26,9 @@ esphome:
 
 esp8266:
   board: nodemcuv2
-  restore_from_flash: true
+  restore_from_flash: false
   framework:
-    version: latest
+    version: recommended
 
 globals:
     - type: int
