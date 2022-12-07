@@ -347,7 +347,10 @@ public:
 
         configurePins ();
 
-        register_service (&EsphomeCover::on_calibrate, "calibration", {"action"});
+        register_service (&EsphomeCover::on_calibrate, "calibration", { "action" });
+
+        currentPosition = angleToPosition (this->position * 100);
+        ESP_LOGI (COVER_TAG, "Position %f", this->position);
     }
 
     void execute_key_sequence (const int* sequence, int size) {

@@ -26,6 +26,7 @@ esphome:
 
 esp8266:
   board: nodemcuv2
+  restore_from_flash: true
   framework:
     version: latest
 
@@ -35,7 +36,7 @@ globals:
       initial_value: '30'
     - type: int
       id: upMotorPin
-      initial_value: '2'
+      initial_value: '4'
     - type: int
       id: downMotorPin
       initial_value: '5'
@@ -43,6 +44,7 @@ globals:
 substitutions:
     upButton: '0'
     downButton: '13'
+    statusLed: '2'
     node_name: 'toldo'
 
 
@@ -111,7 +113,7 @@ light:
     disabled_by_default: true
     pin:
       inverted: true
-      number: GPIO13
+      number: ${statusLed}
 
 text_sensor:
   - platform: wifi_info
