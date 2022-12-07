@@ -356,24 +356,24 @@ public:
     void execute_key_sequence (const int* sequence, int size) {
         const int space = 250;
         int i;
-        ESP_LOGI (COVER_TAG, "execute_calibration_sequence. Size: %d", size);
+        ESP_LOGD (COVER_TAG, "execute_calibration_sequence. Size: %d", size);
         for (i = 0; i < (size - 1); i++) {
-            ESP_LOGI (COVER_TAG, "%d: %d", i, sequence[i]);
+            ESP_LOGD (COVER_TAG, "%d: %d", i, sequence[i]);
             digitalWrite (sequence[i], config.ON_STATE);
             delay (space);
             digitalWrite (sequence[i], !config.ON_STATE);
             delay (space);
         }
-        ESP_LOGI (COVER_TAG, "%d: %d Last step", i, sequence[i]);
+        ESP_LOGD (COVER_TAG, "%d: %d Last step", i, sequence[i]);
         digitalWrite (sequence[i], config.ON_STATE);
         delay (2500);
-        ESP_LOGI (COVER_TAG, "Sequence end");
+        ESP_LOGD (COVER_TAG, "Sequence end");
         digitalWrite (sequence[i], !config.ON_STATE);
         delay (space);
     }
 
     void on_calibrate (int action) {
-        ESP_LOGI (COVER_TAG, "Calibration called. Parameter %d", action);
+        ESP_LOGD (COVER_TAG, "Calibration called. Parameter %d", action);
         const int up = config.motorUpPin;
         const int down = config.motorDownPin;
         const int cancel_calibration[] = { up, up, down, up, up, down };
@@ -382,15 +382,15 @@ public:
 
         switch (action) {
         case 0:
-            ESP_LOGD (COVER_TAG, "Reset calibration");
+            ESP_LOGI (COVER_TAG, "Reset calibration");
             execute_key_sequence (cancel_calibration, sizeof (cancel_calibration) / sizeof (int));
             break;
         case 1:
-            ESP_LOGD (COVER_TAG, "Up calibration");
+            ESP_LOGI (COVER_TAG, "Up calibration");
             execute_key_sequence (up_calibration, sizeof (up_calibration) / sizeof (int));
             break;
         case 2:
-            ESP_LOGD (COVER_TAG, "Down calibration");
+            ESP_LOGI (COVER_TAG, "Down calibration");
             execute_key_sequence (down_calibration, sizeof (down_calibration) / sizeof (int));
             break;
         }
