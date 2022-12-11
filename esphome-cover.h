@@ -23,7 +23,7 @@ struct blindControlerHw_t {
     clock_t fullTravellingTime = ROLLING_TIME;
     clock_t notifPeriod = fullTravellingTime / NOTIF_PERIOD_RATIO;
     clock_t keepAlivePeriod = fullTravellingTime * KEEP_ALIVE_PERIOD_RATIO;
-    int ON_STATE = ON_STATE_DEFAULT;
+    bool ON_STATE = ON_STATE_DEFAULT;
 };
 
 typedef enum {
@@ -333,6 +333,7 @@ public:
         config.fullTravellingTime = fullTravellingTime_config->value () * 1000;
         config.motorDownPin = downMotorPin->value ();
         config.motorUpPin = upMotorPin->value ();
+        config.ON_STATE = onState->value ();
 
         // OFF_STATE = !config.ON_STATE;
         ESP_LOGI (COVER_TAG, "==== Blind Controller Configuration ====");
